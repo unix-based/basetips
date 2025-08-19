@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wallet, QrCode, DollarSign, Users, ArrowRight, Plus, Eye, Download, Trash2 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
@@ -11,6 +11,9 @@ import { Badge } from './components/ui/badge';
 import { Avatar, AvatarFallback } from './components/ui/avatar';
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import LogoComponent from './components/LogoComponent';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { injected } from 'wagmi/connectors';
 
 // Mock data
 const mockQRCodes = [
@@ -53,12 +56,79 @@ const QRStickerPreview = ({ locationName }: { locationName: string }) => (
 
 export default function App() {
   const [currentView, setCurrentView] = useState('landing');
-  const [walletConnected, setWalletConnected] = useState(false);
   const [locationName, setLocationName] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  // MiniKit hooks
+  const { setFrameReady, isFrameReady, context } = useMiniKit();
+  
+  // Wallet hooks
+  const { address, isConnected } = useAccount();
+  const { connectAsync, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  
+  console.log('🔍 MiniKit state:', { isFrameReady, context });
+  console.log('🔍 Wallet state:', { address, isConnected });
+  console.log('🌍 Environment check:', {
+    isClient: typeof window !== 'undefined',
+    userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+    location: typeof window !== 'undefined' ? window.location.href : 'server'
+  });
 
-  const connectWallet = () => {
-    setWalletConnected(true);
-    setCurrentView('dashboard');
+  // Initialize MiniKit frame
+  useEffect(() => {
+    console.log('🚀 Initializing MiniKit frame...');
+    if (!isFrameReady) {
+      setFrameReady();
+      console.log('✅ Frame ready set');
+    }
+  }, [setFrameReady, isFrameReady]);
+
+  const connectWallet = async () => {
+    console.log('🔘 connectWallet function called');
+    console.log('📊 Current state:', { 
+      address, 
+      isConnected, 
+      isConnecting, 
+      currentView,
+      isFrameReady 
+    });
+
+    // If wallet is already connected, just go to dashboard
+    if (isConnected && address) {
+      console.log('✅ Wallet already connected, navigating to dashboard');
+      setCurrentView('dashboard');
+      return;
+    }
+
+    console.log('🔐 Starting wallet connection process...');
+    setIsConnecting(true);
+    
+    try {
+      console.log('📞 Attempting to connect wallet...');
+      
+      // Use the first available connector
+      const connector = connectors[0];
+      console.log('🔗 Using connector:', connector?.name);
+      console.log('🔗 Available connectors:', connectors.map(c => c.name));
+      
+      const result = await connectAsync({ connector });
+      console.log('📥 Connect result:', result);
+      
+      if (result.accounts && result.accounts.length > 0) {
+        console.log('✅ Wallet connected successfully:', result.accounts[0]);
+        setCurrentView('dashboard');
+        console.log('🏠 Navigated to dashboard');
+      } else {
+        console.log('❌ Wallet connection failed: no accounts returned');
+      }
+    } catch (error) {
+      console.error('💥 Wallet connection error:', error);
+      console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    } finally {
+      console.log('🏁 Wallet connection process finished');
+      setIsConnecting(false);
+    }
   };
 
   if (currentView === 'landing') {
@@ -70,9 +140,19 @@ export default function App() {
             <div className="flex items-center gap-2">
               <LogoComponent className="w-8 h-8 font-bold" />
             </div>
-            <Button onClick={connectWallet} className="flex items-center gap-2">
+            <Button 
+              onClick={() => {
+                console.log('🖱️ Header button clicked');
+                console.log('🔧 Button disabled state:', isConnecting);
+                console.log('🔧 Wallet connected:', isConnected);
+                connectWallet();
+              }} 
+              disabled={isConnecting}
+              className="flex items-center gap-2"
+              style={{ pointerEvents: 'auto', zIndex: 1000 }}
+            >
               <Wallet className="w-4 h-4" />
-              Connect Wallet
+              {isConnecting ? 'Connecting...' : isConnected ? 'Dashboard' : 'Connect Wallet'}
             </Button>
           </div>
         </header>
@@ -87,8 +167,20 @@ export default function App() {
               Create custom QR codes for your tables, counters, and service areas. Let customers tip you directly with cryptocurrency through a simple scan.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" onClick={connectWallet} className="flex items-center gap-2">
-                Get Started <ArrowRight className="w-4 h-4" />
+              <Button 
+                size="lg" 
+                onClick={() => {
+                  console.log('🖱️ Hero button clicked');
+                  console.log('🔧 Button disabled state:', isConnecting);
+                  console.log('🔧 Wallet connected:', isConnected);
+                  connectWallet();
+                }} 
+                disabled={isConnecting}
+                className="flex items-center gap-2"
+                style={{ pointerEvents: 'auto', zIndex: 1000 }}
+              >
+                {isConnecting ? 'Connecting...' : isConnected ? 'Go to Dashboard' : 'Get Started'} 
+                <ArrowRight className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="lg">
                 View Demo
@@ -143,13 +235,28 @@ export default function App() {
               <LogoComponent className="w-8 h-8 font-bold" />
             </div>
             <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Wallet Connected
-              </Badge>
-              <Avatar>
-                <AvatarFallback>0x</AvatarFallback>
-              </Avatar>
+              {isConnected && address && (
+                <>
+                  <Badge variant="secondary" className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Wallet Connected
+                  </Badge>
+                  <Avatar>
+                    <AvatarFallback>{address.slice(0, 4)}</AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      console.log('🚪 Disconnecting wallet...');
+                      disconnect();
+                      setCurrentView('landing');
+                    }}
+                  >
+                    Disconnect
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -321,7 +428,12 @@ export default function App() {
 
                 <div className="space-y-2">
                   <Label htmlFor="wallet">Wallet Address</Label>
-                  <Input id="wallet" placeholder="0x..." value="0x742d35Cc6416C40B34E502E82C7Be8B6FFCA3E0B" readOnly />
+                  <Input 
+                    id="wallet" 
+                    placeholder="0x..." 
+                    value={address || "Connect wallet to see address"} 
+                    readOnly 
+                  />
                 </div>
 
                 <div className="space-y-2">
