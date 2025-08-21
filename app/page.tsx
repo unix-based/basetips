@@ -16,6 +16,7 @@ import QRCodeGenerator from './components/QRCodeGenerator';
 import { printQRSticker } from './utils/print-sticker';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { fetchRecentTransactions, getMockTransactions, calculateUSDValue, type TipTransaction } from './utils/transaction-fetcher';
 
 // Mock data
 const mockQRCodes = [
@@ -63,6 +64,11 @@ export default function App() {
     selectedQRName: ''
   });
   
+  // Transaction state
+  const [recentTips, setRecentTips] = useState<TipTransaction[]>([]);
+  const [isLoadingTips, setIsLoadingTips] = useState(false);
+  const [tipsError, setTipsError] = useState<string | null>(null);
+  
   // MiniKit hooks
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   
@@ -87,6 +93,48 @@ export default function App() {
       console.log('✅ Frame ready set');
     }
   }, [setFrameReady, isFrameReady]);
+
+  // Function to fetch tip transactions
+  const fetchTipTransactions = async (walletAddress?: string) => {
+    if (!walletAddress) {
+      // Use mock data when no wallet is connected
+      console.log('👤 No wallet connected, using mock data for demo');
+      console.log('🎭 Mock data shows sample transactions to demonstrate the interface');
+      setRecentTips(getMockTransactions());
+      return;
+    }
+
+    setIsLoadingTips(true);
+    setTipsError(null);
+    
+    try {
+      console.log('🔍 Fetching transactions for address:', walletAddress);
+      const transactions = await fetchRecentTransactions(walletAddress as `0x${string}`);
+      
+      if (transactions.length === 0) {
+        // If no real transactions found, show mock data for demo
+        console.log('📝 No real transactions found, switching to mock data for demo');
+        console.log('🎭 Mock data contains sample transactions to demonstrate the UI');
+        setRecentTips(getMockTransactions());
+      } else {
+        console.log('✅ Found real transactions:', transactions.length);
+        setRecentTips(transactions);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching transactions:', error);
+      setTipsError('Failed to load recent tips');
+      // Fallback to mock data on error
+      console.log('🎭 Falling back to mock data due to error');
+      setRecentTips(getMockTransactions());
+    } finally {
+      setIsLoadingTips(false);
+    }
+  };
+
+  // Fetch transactions when wallet address changes
+  useEffect(() => {
+    fetchTipTransactions(address);
+  }, [address]);
 
   const connectWallet = async () => {
     console.log('🔘 connectWallet function called');
@@ -332,31 +380,86 @@ export default function App() {
               {/* Recent Activity */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Tips</CardTitle>
-                  <CardDescription>Latest tips received across all QR codes</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Recent Tips</CardTitle>
+                      <CardDescription>
+                        Latest tips received across all QR codes
+                        {!address && " (Demo data)"}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchTipTransactions(address)}
+                      disabled={isLoadingTips}
+                    >
+                      {isLoadingTips ? 'Refreshing...' : 'Refresh'}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { location: "Table 1", amount: "0.005 ETH", time: "2 minutes ago" },
-                      { location: "Counter", amount: "0.003 ETH", time: "15 minutes ago" },
-                      { location: "Table 2", amount: "0.008 ETH", time: "1 hour ago" },
-                    ].map((tip, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-3">
-                          <QrCode className="w-5 h-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">{tip.location}</p>
-                            <p className="text-sm text-muted-foreground">{tip.time}</p>
+                  {isLoadingTips ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 animate-pulse">
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 bg-muted rounded" />
+                            <div className="space-y-2">
+                              <div className="h-4 w-16 bg-muted rounded" />
+                              <div className="h-3 w-20 bg-muted rounded" />
+                            </div>
+                          </div>
+                          <div className="text-right space-y-2">
+                            <div className="h-4 w-16 bg-muted rounded" />
+                            <div className="h-3 w-12 bg-muted rounded" />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{tip.amount}</p>
-                          <p className="text-sm text-muted-foreground">≈ $12.50</p>
+                      ))}
+                    </div>
+                  ) : tipsError ? (
+                    <div className="text-center p-4 text-muted-foreground">
+                      <p className="text-sm">⚠️ {tipsError}</p>
+                      <p className="text-xs mt-1">Showing demo data instead</p>
+                    </div>
+                  ) : recentTips.length === 0 ? (
+                    <div className="text-center p-4 text-muted-foreground">
+                      <QrCode className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No tips received yet</p>
+                      <p className="text-xs">Tips will appear here when customers scan your QR codes</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentTips.map((tip) => (
+                        <div key={tip.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <QrCode className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium">{tip.location}</p>
+                              <p className="text-sm text-muted-foreground">{tip.time}</p>
+                              {address && (
+                                <p className="text-xs text-muted-foreground/80">
+                                  From: {tip.from.slice(0, 6)}...{tip.from.slice(-4)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{tip.amount}</p>
+                            <p className="text-sm text-muted-foreground">{calculateUSDValue(tip.amountInEth)}</p>
+                            {address && (
+                              <button
+                                onClick={() => window.open(`https://basescan.org/tx/${tip.hash}`, '_blank')}
+                                className="text-xs text-primary hover:underline mt-1"
+                              >
+                                View on Explorer
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
