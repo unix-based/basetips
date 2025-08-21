@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Wallet, QrCode, DollarSign, Users, ArrowRight, Plus, Eye, Download, Trash2 } from 'lucide-react';
+import { Wallet, QrCode, DollarSign, Users, ArrowRight, Plus, Trash2, Printer, ShoppingCart } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Badge } from './components/ui/badge';
 import { Avatar, AvatarFallback } from './components/ui/avatar';
-import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import LogoComponent from './components/LogoComponent';
+import QRSticker from './components/QRSticker';
+import QRCodeGenerator from './components/QRCodeGenerator';
+import { printQRSticker } from './utils/print-sticker';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
 
 // Mock data
 const mockQRCodes = [
@@ -22,42 +24,44 @@ const mockQRCodes = [
   { id: 3, name: "Counter", totalTips: "0.42 ETH", status: "active" },
 ];
 
-// Official Base logo component for QR generation
-const BaseLogo = ({ className }: { className?: string }) => (
-  <ImageWithFallback
-    src="https://www.base.org/base-square.svg"
-    alt="Base Logo"
-    className={className}
-  />
-);
 
-// QR Code Sticker Preview Component
-const QRStickerPreview = ({ locationName }: { locationName: string }) => (
-  <div className="w-64 h-64 bg-white border-4 border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg mx-auto">
-    {/* QR Code placeholder */}
-    <div className="w-32 h-32 bg-gray-900 rounded-lg mb-4 flex items-center justify-center">
-      <QrCode className="w-24 h-24 text-white" />
-    </div>
-    
-    {/* Base logo and basetips text */}
-    <div className="flex items-center gap-2 mb-2">
-      <BaseLogo className="w-6 h-6" />
-      <span className="font-semibold text-gray-900">basetips</span>
-    </div>
-    
-    {/* Location name */}
-    {locationName && (
-      <div className="text-sm text-gray-600 text-center">
-        {locationName}
-      </div>
-    )}
-  </div>
-);
+// QR Code Sticker Preview Component - now using real QR codes
+const QRStickerPreview = ({ locationName, address }: { locationName: string; address?: string }) => {
+  // Use a demo address if no wallet is connected
+  const demoAddress = "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4";
+  const qrAddress = address || demoAddress;
+  
+  return (
+    <QRSticker 
+      address={qrAddress}
+      locationName={locationName || "Location Name"}
+      size="medium"
+    />
+  );
+};
 
 export default function App() {
   const [currentView, setCurrentView] = useState('landing');
   const [locationName, setLocationName] = useState('');
+  const [customWalletAddress, setCustomWalletAddress] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [generatedQRCodes, setGeneratedQRCodes] = useState<{
+    id: number;
+    name: string;
+    address: string;
+    totalTips: string;
+    status: string;
+    createdAt: string;
+  }[]>([]);
+  
+  // Order form state
+  const [orderForm, setOrderForm] = useState({
+    name: '',
+    phone: '',
+    quantity: 1,
+    selectedQRId: null as number | null,
+    selectedQRName: ''
+  });
   
   // MiniKit hooks
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -129,6 +133,20 @@ export default function App() {
       console.log('🏁 Wallet connection process finished');
       setIsConnecting(false);
     }
+  };
+
+  const handleOrderSubmit = () => {
+    // Handle order submission
+    alert(`Order placed!\n\nName: ${orderForm.name}\nPhone: ${orderForm.phone}\nSticker: ${orderForm.selectedQRName}\nQuantity: ${orderForm.quantity}\n\nYou will be contacted soon for payment and shipping details.`);
+    
+    // Reset form
+    setOrderForm({
+      name: '',
+      phone: '',
+      quantity: 1,
+      selectedQRId: null,
+      selectedQRName: ''
+    });
   };
 
   if (currentView === 'landing') {
@@ -345,35 +363,261 @@ export default function App() {
 
             <TabsContent value="qrcodes" className="space-y-6">
               <div className="grid gap-6">
+                {/* Show generated QR codes first */}
+                {generatedQRCodes.map((qr) => (
+                  <Card key={qr.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-white border rounded-lg flex items-center justify-center p-1 flex-shrink-0">
+                          <QRCodeGenerator 
+                            address={qr.address || address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4"}
+                            size={56}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold">{qr.name}</h3>
+                              <Badge variant={qr.status === 'active' ? 'default' : 'secondary'} className="mt-1">
+                                {qr.status}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {qr.address?.slice(0, 8)}...{qr.address?.slice(-6)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold">{qr.totalTips}</p>
+                              <p className="text-sm text-muted-foreground">Total tips</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={async () => {
+                                await printQRSticker(
+                                  qr.address || address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4",
+                                  qr.name
+                                );
+                              }}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setOrderForm(prev => ({
+                                      ...prev,
+                                      selectedQRId: qr.id,
+                                      selectedQRName: qr.name
+                                    }));
+                                  }}
+                                >
+                                  <ShoppingCart className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                  <DialogTitle>Order Physical Stickers</DialogTitle>
+                                  <DialogDescription>
+                                    Order physical stickers for &ldquo;{qr.name}&rdquo;. Fill out your details below.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="order-name" className="text-right">
+                                      Name
+                                    </Label>
+                                    <Input
+                                      id="order-name"
+                                      value={orderForm.name}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, name: e.target.value }))}
+                                      className="col-span-3"
+                                      placeholder="Your full name"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="order-phone" className="text-right">
+                                      Phone
+                                    </Label>
+                                    <Input
+                                      id="order-phone"
+                                      value={orderForm.phone}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, phone: e.target.value }))}
+                                      className="col-span-3"
+                                      placeholder="+1 234 567 8900"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="order-quantity" className="text-right">
+                                      Quantity
+                                    </Label>
+                                    <Input
+                                      id="order-quantity"
+                                      type="number"
+                                      min="1"
+                                      max="100"
+                                      value={orderForm.quantity}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                      className="col-span-3"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                  </DialogTrigger>
+                                  <Button 
+                                    onClick={handleOrderSubmit}
+                                    disabled={!orderForm.name || !orderForm.phone || orderForm.quantity < 1}
+                                  >
+                                    Place Order
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setGeneratedQRCodes(prev => prev.filter(item => item.id !== qr.id));
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {/* Show mock QR codes */}
                 {mockQRCodes.map((qr) => (
                   <Card key={qr.id}>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
-                            <QrCode className="w-8 h-8 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">{qr.name}</h3>
-                            <Badge variant={qr.status === 'active' ? 'default' : 'secondary'} className="mt-1">
-                              {qr.status}
-                            </Badge>
-                          </div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-white border rounded-lg flex items-center justify-center p-1 flex-shrink-0">
+                          <QRCodeGenerator 
+                            address={address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4"}
+                            size={56}
+                          />
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{qr.totalTips}</p>
-                          <p className="text-sm text-muted-foreground">Total tips</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold">{qr.name}</h3>
+                              <Badge variant={qr.status === 'active' ? 'default' : 'secondary'} className="mt-1">
+                                {qr.status}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground mt-1">Demo QR Code</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold">{qr.totalTips}</p>
+                              <p className="text-sm text-muted-foreground">Total tips</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={async () => {
+                                await printQRSticker(
+                                  address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4",
+                                  qr.name
+                                );
+                              }}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setOrderForm(prev => ({
+                                      ...prev,
+                                      selectedQRId: qr.id,
+                                      selectedQRName: qr.name
+                                    }));
+                                  }}
+                                >
+                                  <ShoppingCart className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                  <DialogTitle>Order Physical Stickers</DialogTitle>
+                                  <DialogDescription>
+                                    Order physical stickers for &ldquo;{qr.name}&rdquo;. Fill out your details below.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="mock-order-name" className="text-right">
+                                      Name
+                                    </Label>
+                                    <Input
+                                      id="mock-order-name"
+                                      value={orderForm.name}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, name: e.target.value }))}
+                                      className="col-span-3"
+                                      placeholder="Your full name"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="mock-order-phone" className="text-right">
+                                      Phone
+                                    </Label>
+                                    <Input
+                                      id="mock-order-phone"
+                                      value={orderForm.phone}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, phone: e.target.value }))}
+                                      className="col-span-3"
+                                      placeholder="+1 234 567 8900"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="mock-order-quantity" className="text-right">
+                                      Quantity
+                                    </Label>
+                                    <Input
+                                      id="mock-order-quantity"
+                                      type="number"
+                                      min="1"
+                                      max="100"
+                                      value={orderForm.quantity}
+                                      onChange={(e) => setOrderForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                      className="col-span-3"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                  </DialogTrigger>
+                                  <Button 
+                                    onClick={handleOrderSubmit}
+                                    disabled={!orderForm.name || !orderForm.phone || orderForm.quantity < 1}
+                                  >
+                                    Place Order
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -430,10 +674,13 @@ export default function App() {
                   <Label htmlFor="wallet">Wallet Address</Label>
                   <Input 
                     id="wallet" 
-                    placeholder="0x..." 
-                    value={address || "Connect wallet to see address"} 
-                    readOnly 
+                    placeholder="0x... or connect wallet" 
+                    value={customWalletAddress || address || ""} 
+                    onChange={(e) => setCustomWalletAddress(e.target.value)}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {address ? "Connected wallet address is shown. You can override it above." : "Enter a wallet address or connect your wallet."}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -442,7 +689,29 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button className="flex-1">Generate QR Code</Button>
+                  <Button 
+                    className="flex-1"
+                    onClick={() => {
+                      const targetAddress = customWalletAddress || address;
+                      if (locationName && targetAddress) {
+                        const newQR = {
+                          id: Date.now(),
+                          name: locationName,
+                          address: targetAddress,
+                          totalTips: "0.00 ETH",
+                          status: "active",
+                          createdAt: new Date().toISOString()
+                        };
+                        setGeneratedQRCodes(prev => [...prev, newQR]);
+                        setLocationName('');
+                        setCustomWalletAddress('');
+                        setCurrentView('dashboard');
+                      }
+                    }}
+                    disabled={!locationName || (!customWalletAddress && !address)}
+                  >
+                    Generate QR Code
+                  </Button>
                   <Button variant="outline" onClick={() => setCurrentView('dashboard')}>
                     Cancel
                   </Button>
@@ -457,7 +726,10 @@ export default function App() {
                 <CardDescription>This is how your QR code sticker will look</CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-8">
-                <QRStickerPreview locationName={locationName || "Location Name"} />
+                <QRStickerPreview 
+                  locationName={locationName || "Location Name"} 
+                  address={customWalletAddress || address}
+                />
               </CardContent>
             </Card>
           </div>
