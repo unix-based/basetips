@@ -1,11 +1,20 @@
-export const printQRSticker = (address: string, locationName: string) => {
-  // Create a new window for printing
-  const printWindow = window.open('', '_blank', 'width=800,height=800');
-  
-  if (!printWindow) {
-    alert('Please allow popups to print the QR sticker.');
-    return;
-  }
+import { createTempQRImage } from './qr-generator';
+
+export const printQRSticker = async (address: string, locationName: string) => {
+  try {
+    // Generate QR code image first
+    const qrImageDataUrl = await createTempQRImage(address, {
+      width: 400, // High resolution for print quality
+      margin: 2
+    });
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    
+    if (!printWindow) {
+      alert('Please allow popups to print the QR sticker.');
+      return;
+    }
 
   // Create the HTML content for printing
   const printContent = `
@@ -293,7 +302,7 @@ export const printQRSticker = (address: string, locationName: string) => {
           ${locationName ? `<div class="location-name">${locationName}</div>` : ''}
           
           <div class="qr-container">
-            <canvas class="qr-code" id="qr-canvas"></canvas>
+            <img class="qr-code" src="${qrImageDataUrl}" alt="QR Code for ${address}" />
           </div>
           
           <div class="brand-container">
@@ -312,66 +321,17 @@ export const printQRSticker = (address: string, locationName: string) => {
         
         <button class="print-button">Print Sticker</button>
         
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
         <script>
-          // Generate QR code after library loads
-          function generateQRCode() {
-            return new Promise((resolve) => {
-              const canvas = document.getElementById('qr-canvas');
-              const paymentUrl = 'ethereum:${address}';
-              
-              // Set canvas size explicitly
-              canvas.width = 180;
-              canvas.height = 180;
-              
-              if (typeof QRCode !== 'undefined') {
-                QRCode.toCanvas(canvas, paymentUrl, {
-                  width: 180,
-                  margin: 2,
-                  color: {
-                    dark: '#1f2937',
-                    light: '#ffffff'
-                  },
-                  errorCorrectionLevel: 'H'
-                }, function (error) {
-                  if (error) {
-                    console.error('QR code generation failed:', error);
-                    // Fallback: draw a placeholder
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#f3f4f6';
-                    ctx.fillRect(0, 0, 180, 180);
-                    ctx.fillStyle = '#6b7280';
-                    ctx.font = '16px system-ui';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('QR Code', 90, 90);
-                  } else {
-                    console.log('QR code generated successfully');
-                  }
-                  resolve();
-                });
-              } else {
-                // Retry if library not loaded yet
-                setTimeout(() => generateQRCode().then(resolve), 100);
-              }
-            });
-          }
-          
-          // Initialize QR code generation
-          async function initializeSticker() {
-            try {
-              await generateQRCode();
-              console.log('Sticker ready for printing');
-              
-              // If autoprint is requested, wait a bit more then print
-              if (window.location.search.includes('autoprint')) {
-                setTimeout(() => {
-                  console.log('Auto-printing...');
-                  window.print();
-                }, 500);
-              }
-            } catch (error) {
-              console.error('Failed to initialize sticker:', error);
+          // Auto-print functionality
+          function initializeSticker() {
+            console.log('Sticker ready for printing');
+            
+            // If autoprint is requested, print immediately
+            if (window.location.search.includes('autoprint')) {
+              setTimeout(() => {
+                console.log('Auto-printing...');
+                window.print();
+              }, 500);
             }
           }
           
@@ -386,10 +346,9 @@ export const printQRSticker = (address: string, locationName: string) => {
           document.addEventListener('DOMContentLoaded', () => {
             const printButton = document.querySelector('.print-button');
             if (printButton) {
-              printButton.addEventListener('click', async () => {
-                console.log('Print button clicked, ensuring QR is ready...');
-                await generateQRCode(); // Regenerate if needed
-                setTimeout(() => window.print(), 200);
+              printButton.addEventListener('click', () => {
+                console.log('Print button clicked');
+                window.print();
               });
             }
           });
@@ -398,10 +357,14 @@ export const printQRSticker = (address: string, locationName: string) => {
     </html>
   `;
 
-  // Write content to the print window
-  printWindow.document.write(printContent);
-  printWindow.document.close();
-  
-  // Focus the print window
-  printWindow.focus();
+    // Write content to the print window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Focus the print window
+    printWindow.focus();
+  } catch (error) {
+    console.error('Failed to generate QR sticker:', error);
+    alert('Failed to generate QR code for printing. Please try again.');
+  }
 };

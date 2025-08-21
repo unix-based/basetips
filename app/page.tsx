@@ -394,8 +394,8 @@ export default function App() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => {
-                                printQRSticker(
+                              onClick={async () => {
+                                await printQRSticker(
                                   qr.address || address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4",
                                   qr.name
                                 );
@@ -527,8 +527,8 @@ export default function App() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => {
-                                printQRSticker(
+                              onClick={async () => {
+                                await printQRSticker(
                                   address || "0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4",
                                   qr.name
                                 );

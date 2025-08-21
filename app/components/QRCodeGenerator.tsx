@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import QRCode from 'qrcode';
+import { generateQRCodeDataURL } from '../utils/qr-generator';
 
 interface QRCodeGeneratorProps {
   address: string;
@@ -32,12 +32,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         setLoading(true);
         setError('');
 
-        // Create payment URL for Ethereum address
-        // Using ethereum: URI scheme which most wallets support
-        const paymentUrl = `ethereum:${address}`;
-        
         // Generate QR code with high error correction and appropriate size
-        const qrCodeDataUrl = await QRCode.toDataURL(paymentUrl, {
+        const qrCodeDataUrl = await generateQRCodeDataURL(address, {
           width: size * 2, // Higher resolution for better quality
           margin: 2,
           color: {

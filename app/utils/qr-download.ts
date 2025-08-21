@@ -1,4 +1,4 @@
-import QRCode from 'qrcode';
+import { generateQRCodeDataURL } from './qr-generator';
 
 export const downloadQRSticker = async (
   address: string,
@@ -6,11 +6,8 @@ export const downloadQRSticker = async (
   size: number = 400
 ) => {
   try {
-    // Create payment URL for Ethereum address
-    const paymentUrl = `ethereum:${address}`;
-    
     // Generate QR code with high quality settings
-    const qrCodeDataUrl = await QRCode.toDataURL(paymentUrl, {
+    const qrCodeDataUrl = await generateQRCodeDataURL(address, {
       width: size * 2, // Higher resolution
       margin: 2,
       color: {
