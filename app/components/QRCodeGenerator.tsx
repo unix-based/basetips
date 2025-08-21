@@ -76,6 +76,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   return (
     <div className={className}>
       {qrCodeUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img 
           src={qrCodeUrl} 
           alt={`QR Code for ${locationName || 'payment'}`}

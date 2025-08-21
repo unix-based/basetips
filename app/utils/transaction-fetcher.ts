@@ -55,7 +55,7 @@ export async function fetchRecentTransactions(
         if (typeof tx === 'string') continue; // Skip if tx is just a hash
         
         // Check if this is a transaction TO our address with value > 0
-        if (tx.to?.toLowerCase() === address.toLowerCase() && tx.value > 0n) {
+        if (tx.to?.toLowerCase() === address.toLowerCase() && tx.value > BigInt(0)) {
           const receipt = await publicClient.getTransactionReceipt({ hash: tx.hash });
           
           if (receipt.status === 'success') {
@@ -141,7 +141,7 @@ export function getMockTransactions(): TipTransaction[] {
       hash: '0x1234567890abcdef1234567890abcdef12345678' as Hash,
       from: '0xabcdef1234567890abcdef1234567890abcdef12' as Address,
       to: '0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4' as Address,
-      blockNumber: 12345678n,
+      blockNumber: BigInt(12345678),
       timestamp: Date.now() - 2 * 60 * 1000
     },
     {
@@ -153,7 +153,7 @@ export function getMockTransactions(): TipTransaction[] {
       hash: '0x2345678901bcdef22345678901bcdef223456789' as Hash,
       from: '0xbcdef2345678901bcdef2345678901bcdef23456' as Address,
       to: '0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4' as Address,
-      blockNumber: 12345677n,
+      blockNumber: BigInt(12345677),
       timestamp: Date.now() - 15 * 60 * 1000
     },
     {
@@ -165,7 +165,7 @@ export function getMockTransactions(): TipTransaction[] {
       hash: '0x3456789012cdef343456789012cdef3434567890' as Hash,
       from: '0xcdef3456789012cdef3456789012cdef34567890' as Address,
       to: '0x742d35Cc6634C0532925a3b8D0Cd1c62C3b86Eb4' as Address,
-      blockNumber: 12345676n,
+      blockNumber: BigInt(12345676),
       timestamp: Date.now() - 60 * 60 * 1000
     }
   ];
