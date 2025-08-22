@@ -1,7 +1,6 @@
 #  BaseTips
 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/theakopov/basetips/pulls)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/theakopov/basetips/ci.yml?branch=main)](https://github.com/theakopov/basetips/actions)
+
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-green?logo=node.js)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-blue?logo=tailwind-css)](https://tailwindcss.com)
