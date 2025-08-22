@@ -1,112 +1,114 @@
-# MiniKit Template
+#  BaseTips
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain --mini`](), configured with:
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/theakopov/basetips/pulls)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/theakopov/basetips/ci.yml?branch=main)](https://github.com/theakopov/basetips/actions)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-green?logo=node.js)](https://nodejs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-blue?logo=tailwind-css)](https://tailwindcss.com)
+[![Base Network](https://img.shields.io/badge/Base-Network-blue?logo=coinbase)](https://base.org)
 
-- [MiniKit](https://docs.base.org/builderkits/minikit/overview)
-- [OnchainKit](https://www.base.org/builders/onchainkit)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Next.js](https://nextjs.org/docs)
+**Generate QR Stickers for Crypto Tips**
 
-## Getting Started
+BaseTips is a modern web application that allows businesses to create custom QR code stickers for receiving cryptocurrency tips. Perfect for restaurants, cafes, bars, and service businesses looking to accept digital payments seamlessly.
 
-1. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
-```
+<!-- Screenshot of the main dashboard -->
+![Dashboard](.dashboard.png)
 
-2. Verify environment variables, these will be set up by the `npx create-onchain --mini` command:
+<!-- Screenshot of the QR code creation process -->
+![QR Creation](.qr.png)
 
-You can regenerate the FARCASTER Account Association environment variables by running `npx create-onchain --manifest` in your project directory.
+## ✨ Features
 
-The environment variables enable the following features:
+- 🔗 **Connect Wallet**: Seamlessly connect your crypto wallet using Coinbase's OnChainKit
+- 📱 **QR Code Generation**: Create custom QR codes for different locations (tables, counters, etc.)
+- 🖨️ **Print Ready Stickers**: Generate printable QR code stickers with your branding
+- 📊 **Dashboard Analytics**: Track tips received across all your QR codes
+- 💰 **Multi-Currency Support**: Accept tips in various cryptocurrencies on Base network
+- 🛒 **Physical Sticker Orders**: Order professional physical stickers for your business
+- 📈 **Real-time Updates**: Monitor incoming tips with live transaction tracking
 
-- Frame metadata - Sets up the Frame Embed that will be shown when you cast your frame
-- Account association - Allows users to add your frame to their account, enables notifications
-- Redis API keys - Enable Webhooks and background notifications for your application by storing users notification details
 
-```bash
-# Shared/OnchainKit variables
-NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME=
-NEXT_PUBLIC_URL=
-NEXT_PUBLIC_ICON_URL=
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=
+## 🛠️ Tech Stack
 
-# Frame metadata
-FARCASTER_HEADER=
-FARCASTER_PAYLOAD=
-FARCASTER_SIGNATURE=
-NEXT_PUBLIC_APP_ICON=
-NEXT_PUBLIC_APP_SUBTITLE=
-NEXT_PUBLIC_APP_DESCRIPTION=
-NEXT_PUBLIC_APP_SPLASH_IMAGE=
-NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR=
-NEXT_PUBLIC_APP_PRIMARY_CATEGORY=
-NEXT_PUBLIC_APP_HERO_IMAGE=
-NEXT_PUBLIC_APP_TAGLINE=
-NEXT_PUBLIC_APP_OG_TITLE=
-NEXT_PUBLIC_APP_OG_DESCRIPTION=
-NEXT_PUBLIC_APP_OG_IMAGE=
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Blockchain**: Base Network, Wagmi, OnChainKit
+- **Wallet Integration**: Coinbase Wallet, MiniKit
+- **QR Generation**: Custom QR code generator
+- **Notifications**: Real-time transaction notifications
 
-# Redis config
-REDIS_URL=
-REDIS_TOKEN=
-```
+## 🚀 Getting Started
 
-3. Start the development server:
-```bash
-npm run dev
-```
+### Prerequisites
 
-## Template Features
+- Node.js 18+ installed
+- npm or yarn package manager
+- A crypto wallet (Coinbase Wallet recommended)
 
-### Frame Configuration
-- `.well-known/farcaster.json` endpoint configured for Frame metadata and account association
-- Frame metadata automatically added to page headers in `layout.tsx`
+### Installation
 
-### Background Notifications
-- Redis-backed notification system using Upstash
-- Ready-to-use notification endpoints in `api/notify` and `api/webhook`
-- Notification client utilities in `lib/notification-client.ts`
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/basetips.git
+   cd basetips
+   ```
 
-### Theming
-- Custom theme defined in `theme.css` with OnchainKit variables
-- Pixel font integration with Pixelify Sans
-- Dark/light mode support through OnchainKit
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-### MiniKit Provider
-The app is wrapped with `MiniKitProvider` in `providers.tsx`, configured with:
-- OnchainKit integration
-- Access to Frames context
-- Sets up Wagmi Connectors
-- Sets up Frame SDK listeners
-- Applies Safe Area Insets
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Fill in your environment variables:
+   ```env
+   NEXT_PUBLIC_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_ENVIRONMENT=development
+   ```
 
-## Customization
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-To get started building your own frame, follow these steps:
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-1. Remove the DemoComponents:
-   - Delete `components/DemoComponents.tsx`
-   - Remove demo-related imports from `page.tsx`
+## 📋 Usage
 
-2. Start building your Frame:
-   - Modify `page.tsx` to create your Frame UI
-   - Update theme variables in `theme.css`
-   - Adjust MiniKit configuration in `providers.tsx`
+1. **Connect Your Wallet**: Click "Connect Wallet" to link your crypto wallet
+2. **Create QR Codes**: Use the dashboard to generate QR codes for different locations
+3. **Print Stickers**: Download or print QR code stickers for physical placement
+4. **Track Tips**: Monitor incoming tips in real-time from your dashboard
+5. **Order Physical Stickers**: Use the built-in ordering system for professional stickers
 
-3. Add your frame to your account:
-   - Cast your frame to see it in action
-   - Share your frame with others to start building your community
 
-## Learn More
+## 🔧 Development
 
-- [MiniKit Documentation](https://docs.base.org/builderkits/minikit/overview)
-- [OnchainKit Documentation](https://docs.base.org/builderkits/onchainkit/getting-started)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 🆘 Support
+
+If you have any questions or need help getting started:
+
+- Create an [Issue](https://github.com/theakopov/basetips/issues)
+- Check out the [Base Network documentation](https://docs.base.org/)
+
+---
+
+**Made with ❤️ for the crypto community**
