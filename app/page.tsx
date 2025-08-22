@@ -248,7 +248,14 @@ export default function App() {
                 {isConnecting ? 'Connecting...' : isConnected ? 'Go to Dashboard' : 'Get Started'} 
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => {
+                  console.log('🖱️ View Demo button clicked');
+                  setCurrentView('dashboard');
+                }}
+              >
                 View Demo
               </Button>
             </div>
