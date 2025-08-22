@@ -304,11 +304,17 @@ export default function App() {
         {/* Header */}
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => {
+                console.log('🏠 Dashboard logo clicked, returning to main page...');
+                setCurrentView('landing');
+              }}
+            >
               <LogoComponent className="w-8 h-8 font-bold" />
             </div>
             <div className="flex items-center gap-4">
-              {isConnected && address && (
+              {isConnected && address ? (
                 <>
                   <Badge variant="secondary" className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -327,6 +333,23 @@ export default function App() {
                     }}
                   >
                     Disconnect
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge variant="secondary" className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    Demo Mode
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      console.log('🏠 Returning to main page from demo...');
+                      setCurrentView('landing');
+                    }}
+                  >
+                    Exit Demo
                   </Button>
                 </>
               )}
