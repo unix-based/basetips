@@ -8,13 +8,13 @@
 
 **Generate QR Stickers for Crypto Tips**
 
+![Demo](./static/demo.gif)
+
+![Dashboard](./static/dashboard.png)
+
+![QR Creation](./static/qr.png)
+
 BaseTips is a modern web application that allows businesses to create custom QR code stickers for receiving cryptocurrency tips. Perfect for restaurants, cafes, bars, and service businesses looking to accept digital payments seamlessly.
-
-<!-- Screenshot of the main dashboard -->
-![Dashboard](.dashboard.png)
-
-<!-- Screenshot of the QR code creation process -->
-![QR Creation](.qr.png)
 
 ## ✨ Features
 
