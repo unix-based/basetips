@@ -1,10 +1,21 @@
-#  BaseTips
+<div align="center">
+  <a href="https://base.org" target="_blank">
+    <img alt="Base Hackathon — 3rd place" src="https://img.shields.io/badge/%E2%9A%A1%EF%B8%8F%20Base%20Hackathon-3rd%20place%20%F0%9F%A5%89-0052ff?style=for-the-badge&labelColor=000000" />
+  </a>
+</div>
 
+<div align="center">
+  <h1>BaseTips</h1>
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-green?logo=node.js)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-blue?logo=tailwind-css)](https://tailwindcss.com)
 [![Base Network](https://img.shields.io/badge/Base-Network-blue?logo=coinbase)](https://base.org)
+
+</div>
+
+
+
 
 **Generate QR Stickers for Crypto Tips**
 
